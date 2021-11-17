@@ -59,21 +59,6 @@ export const parseYamlFromDescription = (description) => {
   return yaml_struct;
 };
 
-export const getStringFromDescriptionYaml = (description, column_name) => {
-  if (description === null) {
-    return null;
-  }
-  const yaml_struct = parseYamlFromDescription(description);
-  if (yaml_struct === null || !(column_name in yaml_struct)) {
-    return null;
-  }
-  const string = yaml_struct[column_name];
-  if (typeof string !== 'string') {
-    return null;
-  }
-  return removeLastSpace(removeLastSpace(string));
-};
-
 export const getNumberFromDescriptionYaml = (description, column_name) => {
   if (description === null) {
     return null;
@@ -87,17 +72,6 @@ export const getNumberFromDescriptionYaml = (description, column_name) => {
     return null;
   }
   return number;
-};
-
-export const getDateFromDescriptionYaml = (description, column_name) => {
-  if (description === null) {
-    return null;
-  }
-  const date = getStringFromDescriptionYaml(description, column_name);
-  if (!/\d{4}\/\d{1,2}\/\d{1,2}/.test(date)) {
-    return null;
-  }
-  return new Date(date);
 };
 
 export const replacePropertyInDescriptionString = (description, task) => {

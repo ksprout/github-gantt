@@ -30,8 +30,8 @@ const shortenDate = (date) => {
 
 export const setGanttConfig = (gantt) => {
   gantt.config.xml_date = '%Y/%m/%d %H:%i';
-  gantt.config.order_branch = true;
-  gantt.config.order_branch_free = true;
+  gantt.config.order_branch = false;
+  gantt.config.order_branch_free = false;
 
   gantt.config.keep_grid_width = true;
   gantt.config.grid_resize = true;
@@ -39,6 +39,10 @@ export const setGanttConfig = (gantt) => {
   gantt.config.fit_tasks = true;
   gantt.config.show_grid = false;
   gantt.config.sort = true;
+
+  // ドラッグで子タスクを作成できないようにする
+  gantt.config.drag_links = false;
+  gantt.config.drag_progress = false;
 
   gantt.config.columns = [
     {

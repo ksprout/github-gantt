@@ -1,5 +1,4 @@
 import {
-  getDateFromDescriptionYaml,
   getNumberFromDescriptionYaml,
   removeFirstSharp,
   replacePropertyInDescriptionString,
@@ -23,8 +22,8 @@ const getGitHubAssignee = (issue_info) => {
 };
 
 export const generateGanttTaskFromGitHub = (description, issue_info) => {
-  const start_date = getDateFromDescriptionYaml(description, 'start_date');
-  const due_date = getDateFromDescriptionYaml(description, 'due_date');
+  const start_date = getStartDate(description);
+  const due_date = getDueDate(description);
 
   const gantt_task = {
     id: '#' + issue_info.number,
@@ -39,6 +38,24 @@ export const generateGanttTaskFromGitHub = (description, issue_info) => {
     update: getGanttUpdateDate(issue_info.created_at, issue_info.updated_at),
   };
   return gantt_task;
+};
+
+export const getStartDate = (description) => {
+  const index = description.indexOf("start_date");
+  if (index >= 0) {
+    return new Date(description.substr(index + 12, 10));
+  } else {
+    return null;
+  }
+};
+
+export const getDueDate = (description) => {
+  const index = description.indexOf("due_date");
+  if (index >= 0) {
+    return new Date(description.substr(index + 10, 10));
+  } else {
+    return null;
+  }
 };
 
 export const generateLinkFromGitHub = (issue_info) => {

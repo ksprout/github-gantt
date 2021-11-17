@@ -20,9 +20,12 @@ import {
   replacePropertyInDescriptionString,
 } from '../Common/Parser.js';
 
-export const getGitHubIssueFromAPI = async (git_url, issue_info) => {
+export const getGitHubIssueFromAPI = async (git_url, token, issue_info) => {
   return axios
-    .get(getGitHubAPIURLIssuebyNumber(git_url, issue_info.number))
+    .get(getGitHubAPIURLIssuebyNumber(git_url, issue_info.number), {
+      headers: { Authorization: `token ${token}` },
+      data: {},
+    })
     .then((res) => {
       let links = [];
       const gantt_task = generateGanttTaskFromGitHub(res.data.body, issue_info);
@@ -48,17 +51,21 @@ export const getGitHubIssueFromAPI = async (git_url, issue_info) => {
 
 export const getGitHubIssuesFromAPI = async (
   git_url,
+  token,
   selected_labels,
   selected_assignee
 ) => {
   return axios
     .get(
-      getGitHubAPIURLIssueFilterd(git_url, selected_labels, selected_assignee)
+      getGitHubAPIURLIssueFilterd(git_url, selected_labels, selected_assignee), {
+        headers: { Authorization: `token ${token}` },
+        data: {},
+      }
     )
     .then((res) => {
       const promise_list = [];
       res.data.map((issue_info) => {
-        promise_list.push(getGitHubIssueFromAPI(git_url, issue_info));
+        promise_list.push(getGitHubIssueFromAPI(git_url, token, issue_info));
       });
       return Promise.all(promise_list);
     })
@@ -68,7 +75,10 @@ export const getGitHubIssuesFromAPI = async (
 };
 
 export const setGitHubLabelListOfRepoFromAPI = async (git_url, token) => {
-  return axios.get(getGitHubAPIURLLabel(git_url)).then((res) => {
+  return axios.get(getGitHubAPIURLLabel(git_url), {
+    headers: { Authorization: `token ${token}` },
+    data: {},
+  }).then((res) => {
     let labels = [];
     res.data.map((info) => {
       labels.push({ id: info.id, name: info.name });
@@ -112,13 +122,17 @@ export const updateGitHubIssueFromGanttTask = (
     removeFirstSharp(gantt_task.id)
   );
   axios
-    .get(url)
+    .get(url, {
+      headers: { Authorization: `token ${token}` },
+      data: {},
+    })
     .then((res) => {
       const issue_info = res.data;
       if (
-        updateGitHubDescriptionStringFromGanttTask(
+        updateGanttTask(
           issue_info.body,
-          gantt_task
+          gantt_task.start_date,
+          gantt_task.due_date,
         ) == null
       ) {
         gantt.message({
@@ -131,9 +145,10 @@ export const updateGitHubIssueFromGanttTask = (
             .post(
               url,
               {
-                body: updateGitHubDescriptionStringFromGanttTask(
+                body: updateGanttTask(
                   issue_info.body,
-                  gantt_task
+                  gantt_task.start_date,
+                  gantt_task.due_date,
                 ),
               },
               {
@@ -164,6 +179,35 @@ export const updateGitHubIssueFromGanttTask = (
       getGitHubIssuesFromAPI(gantt, git_url);
     });
   return null;
+};
+
+export const updateGanttTask = (description, startDate, dueDate) => {
+  let text = description;
+
+  const dateToString = (date) => {
+    const year = String(date.getFullYear());
+    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const day = ('0' + date.getDate()).slice(-2);
+    return `${year}/${month}/${day}`;
+  };
+
+  const startDateIndex = text.indexOf("start_date");
+  if (startDateIndex >= 0) {
+    const currentDateStr = text.substr(startDateIndex + 12, 10);
+    text = text.replace(currentDateStr, dateToString(startDate));
+  }
+
+  const dueDateIndex = text.indexOf("due_date");
+  if (dueDateIndex >= 0) {
+    const currentDateStr = text.substr(dueDateIndex + 10, 10);
+    text = text.replace(currentDateStr, dateToString(dueDate));
+  }
+
+  if (startDateIndex === -1 && dueDateIndex === -1) {
+    text += `\n\n\`\`\`yaml\nstart_date: ${dateToString(startDate)}\ndue_date: ${dateToString(dueDate)}\n\`\`\``;
+  }
+
+  return text;
 };
 
 export const openGitHubIssueAtBrowser = (gantt_task_id, git_url) => {

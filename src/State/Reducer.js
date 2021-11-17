@@ -12,10 +12,6 @@ import {
 } from '../functions/Common/IssueAPI.js';
 import { isValidVariable } from '../functions/Common/CommonHelper.js';
 import { isGitHubURL } from '../functions/GitHub/GitHubURLHelper.js';
-import {
-  isGitLabURL,
-  getSelfHostingGitLabDomain,
-} from '../functions/GitLab/GitLabURLHelper.js';
 
 import { gantt } from 'dhtmlx-gantt';
 
@@ -104,8 +100,10 @@ export const handleOpenNewIssueAtBrowser = (state, action) => {
 };
 
 export const handleUpdateIssueByAPI = (state, action) => {
+  const ganttTask = action.value.gantt_task;
+  ganttTask.due_date = ganttTask.end_date;
   updateIssueByAPI(
-    action.value.gantt_task,
+    ganttTask,
     state.token,
     action.value.gantt,
     state.git_url
@@ -122,10 +120,6 @@ export const handleGitURLChange = (
   git_url = removeLastSlash(removeLastSpace(git_url));
   if (isGitHubURL(git_url)) {
     gantt.message({ text: 'Access GitHub.com' });
-  } else if (isGitLabURL(git_url)) {
-    gantt.message({ text: 'Access GitLab.com' });
-  } else if (getSelfHostingGitLabDomain(git_url) !== null) {
-    gantt.message({ text: 'Access Maybe GitLab.self-host' });
   } else if (git_url === '') {
   } else {
     gantt.message({ text: 'Not a valid URL.', type: 'error' });
